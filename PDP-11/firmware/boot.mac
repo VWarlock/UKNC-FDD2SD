@@ -6,11 +6,11 @@
 	.IDENT /VER 01/
 	.ASECT
 
-	CR = 15
-	LF = 12
-	B1ADR = 10000
+	CR = 15				; Код возврата каретки
+	LF = 12				; Код перевода на следующую строку
+	B1ADR = 10000			; Адрес начала BOOT1
 	TMPBUF = 20000
-	DSKBUF = 116000
+	DSKBUF = 116000			; Адрес дискового буфера
 	
 	.= 0
 	NOP
@@ -27,6 +27,7 @@
 	.= 100
 	.WORD DUMINT, 0
 
+
 ;-----------------------------------------------------------------------
 ;Start
 START:	MOV #STKLO, SP
@@ -40,6 +41,7 @@ START:	MOV #STKLO, SP
 	CALL @#PRNMS1
 	HALT
 LD1OK$:	JMP @#B1ADR
+
 
 ;-----------------------------------------------------------------------
 ; COUT	Send Char to Terminal (Cannel #1)
@@ -100,7 +102,7 @@ LDL1$:	BIT #200, @#176674
 
 
 ;-----------------------------------------------------------------------
-; Print Interrupt 4 error
+; Print Interrupt 4 error message
 ;
 I4EMSG:	MOV #MSGI4E,R1
 	CALL @#PRNMS1
@@ -108,7 +110,7 @@ I4EMSG:	MOV #MSGI4E,R1
 
 
 ;-----------------------------------------------------------------------
-; PRNMS1 Send mesage to terminal
+; PRNMS1 Send message to terminal
 ; Input:
 ;	R1  - message address
 ; Output:
@@ -160,6 +162,7 @@ PNL1$:	MOV R1, R2
 	CALL @#PRNMS1
 	RETURN
 
+
 ;-----------------------------------------------------------------------
 ; Messages
  ;.ASCIZ /BOOT0 загружен/<CR><LF>
@@ -180,10 +183,12 @@ MPNKAS:	.WORD 21
 	.WORD B1ADR				; Адрес загрузчика BOOT1
 	.WORD <END - BOOT1>/2			; Длина загрузчика BOOT1
 	.BLKW 4
+
 ;-----------------------------------------------------------------------
 ; Стек 32 слова 
 STKHI:	.BLKW 40	
 STKLO:	.WORD 0         
+
 ;-----------------------------------------------------------------------
 MAXMEM:	.WORD 0
 TMPAD1:	.WORD 0
@@ -191,16 +196,12 @@ TMPAD2:	.WORD 0
 TMPLEN:	.WORD 0
 
 
-
-
-
-;-----------------------------------------------------------------------
 ;-----------------------------------------------------------------------
 ; BOOT1 
 ;	
 	.= 1000
 BOOT1:	NOP
-	MOV #<B1M1-BOOT1+B1ADR>, R1		;MSG: "BOOT1 Загружен"
+	MOV #<B1M1-BOOT1+B1ADR>, R1		; MSG: "BOOT1 Загружен"
 	CALL @#PRNMS1
 	
 	MOV #MP, R1
@@ -248,7 +249,7 @@ B1L1$:	MOV @#<MP+4>, @#TMPAD2
 
 	MOV @#TMPAD2, @#<MP+4>
 	MOV @#TMPLEN, @#<MP+6>
-	MOV #<B1M2-BOOT1+B1ADR>, R1		;MSG: "Память ПП выделена @"
+	MOV #<B1M2-BOOT1+B1ADR>, R1		; MSG: "Память ПП выделена @"
 	CALL @#PRNMS1
 
 	MOV @#<MP+4>, R1
@@ -263,7 +264,7 @@ B1L1$:	MOV @#<MP+4>, @#TMPAD2
 
 	CALL @#LOAD
 	TSTB @#MP
-	BEQ B1L2$ 				; BOOT1: BOOT2  transfer Ok
+	BEQ B1L2$ 				; BOOT1: BOOT2 transfer Ok
 
 	MOV #<B1B2TE-BOOT1+B1ADR>, R1
 	CALL @#PRNMS1
@@ -274,7 +275,7 @@ B1L2$:	MOV #<B1M3-BOOT1+B1ADR>, R1
 	CALL @#LOAD
 
 	TSTB @#MP
-	BEQ B1L3$ 			; BOOT1: BOOT2 run Ok
+	BEQ B1L3$ 				; BOOT1: BOOT2 run Ok
 
 	MOV #<B1B2RE-BOOT1+B1ADR>, R1
 	CALL @#PRNMS1
@@ -290,8 +291,8 @@ B1L3$:	MOV #<B1M4-BOOT1+B1ADR>, R1
 
 	MOV #50, R1
 B1L4$:	MOV #10000, R0
-B1L5$:	SOB R0, B1L5$ 			; wait
-	SOB R1, B1L4$			; wait
+B1L5$:	SOB R0, B1L5$ 				; wait
+	SOB R1, B1L4$				; wait
 
 	MOV #MP, R1
 	MOV #4000, (R1)+
@@ -303,7 +304,7 @@ B1L5$:	SOB R0, B1L5$ 			; wait
 
 	MOV #TMPBUF, R1
 	TST (R1)
-	BEQ B1L8$ 			; BOOT1:  read map.txt error
+	BEQ B1L8$ 				; BOOT1: Read map.txt error
 
 	MOV (R1)+, R4
 	MOV R1, R2	
@@ -313,17 +314,17 @@ B1L5$:	SOB R0, B1L5$ 			; wait
 	MOV #12, R3
 	MOV #15, R5
 
-B1L6$:	MOVB (R2)+, R0  		; print File
+B1L6$:	MOVB (R2)+, R0  			; Print file
 	CALL @#COUT
 
 	CMPB R0, R3
-	BNE B1L7$ 			; skip print
+	BNE B1L7$ 				; Skip print
 
 	MOV R5, R0
 	CALL @#COUT
 
 B1L7$:	SOB R4, B1L6$
-	BR B1L9$ 			; continue map.txt
+	BR B1L9$ 				; Continue map.txt
 
 B1L8$:	MOV #<B1MMER-BOOT1+B1ADR>, R1
 	CALL @#PRNMS1
@@ -337,24 +338,24 @@ B1L9$:	NOP
 	MOV #0, (R1)+
 	MOV #400, (R1)+
 	MOV #20000, R0
-B1L10$:	SOB R0, B1L10$ 			; Waiting
+B1L10$:	SOB R0, B1L10$ 				; Waiting
 	CALL LOAD2
 
 	TSTB @#<MP2-BOOT1+B1ADR>
-	BNE B1L13$ 			; Boot Sector Read error
+	BNE B1L13$ 				; BOOT1: Boot Sector Read error
 
 	MOV #0, R0
 	CMP #240, @#0
-	BNE B1L11$ 			; Illegal Boot Sector (cp_end)
+	BNE B1L11$ 				; BOOT1: Illegal Boot Sector
 	JMP @#0
 
 B1L11$:	MOV #<BSECER-BOOT1+B1ADR>, R1
 	CALL PRNMS2
-	HALT				; <-- end
+	HALT					; <-- end
 
 B1L13$:	MOV #<BSECRE-BOOT1+B1ADR>, R1
 	CALL PRNMS2
-	HALT				; <-- end
+	HALT					; <-- end
 
 
 
@@ -435,6 +436,7 @@ PM2L1$:	MOVB (R1)+, R0
 ;-----------------------------------------------------------------------	
 ; MP2 Массив параметров для работы с дисководом
 MP2:	.BLKW 36
+
 ;-----------------------------------------------------------------------	
 ; Стек
 NEWSTK:	.WORD 0
@@ -491,9 +493,11 @@ BSECRE: .WORD 155757,141311,140713,157040,142724,144716,020321,140732
 
 
 ;-----------------------------------------------------------------------
-; BOOT2
-; input: 	
-; output:	
+;BOOT2
+; Input:
+;	None
+; Output:
+;	None
 ;
 BOOT2:	NOP
 	JMP B2STRT
@@ -509,8 +513,16 @@ TMP10:	.WORD 0
 ;		NOP
 ;		TST (SP)+ ;5726
 ;		TST (SP)+ ;5726
-;		JMP @#LOCKL1
+;		JMP LL1$
 
+
+;-----------------------------------------------------------------------
+;LOCK
+; Input:
+;	None
+; Output:
+;	None
+;
 LOCK:	MOV @#177710, TMP10
 	MOV @#177716, TMP16
 	BIC #20, @#177710		; запрет прерывания по внешнему событию
@@ -536,6 +548,7 @@ LL1$:	BIT #1, @#177716
 	BR LL3$				;BOOT2 ss cont
 LL2$:	MOV #2, R4
 LL3$:	MOV R4, @#177054
+
 ;LOCKL1:	NOP
 ;		NOP
 ;		NOP
@@ -544,13 +557,16 @@ LL3$:	MOV R4, @#177054
 ;		NOP
 ;		TST DSKBUF
 ;		MOV I4OLD, @#4
+
 	RETURN
 
 
 ;-----------------------------------------------------------------------
 ;UNLOCK
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;
 UNLOCK:	MOV SLTOLD, @#177054
 	MOV TMP16, @#177716
@@ -565,19 +581,23 @@ UNLOCK:	MOV SLTOLD, @#177054
 
 ;-----------------------------------------------------------------------
 ;CH2TS Cannel #2 Task Set
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;
 CH2TS:	MOV PC, R1
-	ADD #<CH2TSK+4-.-4>, R1	; ADD <CH2TSK+4>, R1 TODO
+	ADD #<<CH2TSK+4>-.-4>, R1
 	mov R1, @#<07062+024>
 	RETURN
 
 
 ;-----------------------------------------------------------------------
 ;CH2DEL Cannel #2 Delay
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;
 CH2DEL:	CALL LOCK
 	MOV #5, @#<DSKBUF+1776>		;DSKBUF+1022>
@@ -589,12 +609,14 @@ CH2DEL:	CALL LOCK
 
 ;-----------------------------------------------------------------------
 ;CH2LOG: Cannel #2 Log command
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;	
 CH2LOG:	MOV R1, -(SP)			;R0 адрес МП в ЦП /2
 	CALL LOCK
-	MOV #<DSKBUF+10>, R1		;DSKBUF+8.>
+	MOV #<DSKBUF+8.>, R1
 	MOV #6, R5
 	MOV R5, @#<DSKBUF+2>
 C2LL1$:	MOV R0, @#177010
@@ -611,14 +633,16 @@ C2LL1$:	MOV R0, @#177010
 
 ;-----------------------------------------------------------------------
 ;CH2TSK Cannel #2 Task
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;
 	NOP
 CH2TSK:	NOP
 	NOP
 	CALL CH2TS
-	MOV  @#23200, R0			; R0 - адрес МП в озу ЦП
+	MOV  @#23200, R0		; R0 - адрес МП в озу ЦП
 	CLC
 	ROR R0
 	MOV R0, R1			; R1 - адрес МП/2
@@ -655,9 +679,9 @@ C2TL2$:	MOV R1, R0
 	CMPB R0, #103
 	BEQ CDLSL
 	MOV #11, R0
-C2TL3$:	MOV R1, @#177010			; DSK Exit
+C2TL3$:	MOV R1, @#177010		; DSK Exit
 	MOVB R0, @#177014
-	DEC @#7062              	;exit
+	DEC @#7062              	; exit
 	TST @#177064			; готовность Канала 2
 	JMP @#174164			; возврат к менеджеру процессов
 
@@ -679,11 +703,12 @@ CDLSL:	CALL CDDIR			; Disk read directory
 
 ;-----------------------------------------------------------------------
 ;DSKRD Disk: Read
-; input: 	R1 - адрес МП в памяти ЦП /2
-; output:	R0 - код ошибки в мл.байте
-;		R1 - адрес МП в памяти ЦП /2
+; Input:
+;	None
+; Output:
+;	R0 - код ошибки в мл.байте
 ;
-DSKRD:	MOV R1, -(SP)
+DSKRD:	MOV R1, -(SP)			; Сохраняем R1 в стеке
 	CALL DSPAR
 DRL1$:	CALL DSKRDN
 	TST DSKERR
@@ -697,11 +722,12 @@ DRL2$:	MOV (SP)+, R1
 
 ;-----------------------------------------------------------------------
 ;DSKWR Disk: Write
-; input: 	R1 - адрес МП в памяти ЦП /2
-; output:	R0 - код ошибки в мл.байте
-;		R1 - адрес МП в памяти ЦП /2
+; Input:
+;	None
+; Output:
+;	R0 - код ошибки в мл.байте
 ;		
-DSKWR:	MOV R1, -(SP)
+DSKWR:	MOV R1, -(SP)			; Сохраняем R1 в стеке
 	CALL DSPAR
 DWL1$:  CALL DSKWRN		
 	TST DSKERR
@@ -715,18 +741,19 @@ DWL2$:	MOV (SP)+, R1
 
 ;-----------------------------------------------------------------------
 ;DSKFR Disk: Format
-; input: 	R1 - адрес МП в памяти ЦП /2
-; output:	R0 - код ошибки в мл.байте
-;		R1 - адрес МП в памяти ЦП /2
+; Input:
+;	None
+; Output:
+;	None
 ;
-DSKFR:	MOV R1, -(SP)
+DSKFR:	MOV R1, -(SP)			; Сохраняем R1 в стеке
 	CALL DSPAR
 	CALL LOCK
 	MOV @SP, R0
 	ADD #3, R0
 	MOV R0, @#177010
 	MOV @#177014, @#<DSKBUF+6>
-	MOV #3, @#<DSKBUF+1776>			;DSKBUF+1022>
+	MOV #3, @#<DSKBUF+1776>		;DSKBUF+1022>
 	CALL UNLOCK
 	CALL LOCK
 	MOV @#DSKBUF, R0
@@ -736,17 +763,18 @@ DSKFR:	MOV R1, -(SP)
 
 
 ;-----------------------------------------------------------------------
-DSKCPA:	.WORD 0		; dsk_cp_adr	
-DSKNW:	.WORD 0		; dsk_N_words
-DSKERR:	.WORD 0		; DSKERR
-DSKIER:	.WORD 0		; dsk_inc_err
+DSKCPA:	.WORD 0		; Адрес в памяти ЦП	
+DSKNW:	.WORD 0		; Кол-во слов
+DSKERR:	.WORD 0		; Ошибка
+DSKIER:	.WORD 0		; Ошибка увеличения номера сектора
 
 
 ;-----------------------------------------------------------------------
 ;DSPAR Disk: Set Parameters
-; input: 	R1 - адрес МП в памяти ЦП /2
-; output:	R0 - код ошибки в мл.байте
-;		R1 - адрес МП в памяти ЦП /2
+; Input:
+;	R1 - адрес МП в памяти ЦП /2
+; Output:
+;	None
 ;
 DSPAR:	CALL LOCK
 	CLR DSKIER
@@ -772,9 +800,10 @@ DSPAR:	CALL LOCK
 
 ;-----------------------------------------------------------------------
 ;DSKRDN Disk: Read Next
-; input: 	R1 - адрес МП в памяти ЦП /2
-; output:	R0 - код ошибки в мл.байте
-;		R1 - адрес МП в памяти ЦП /2
+; Input:
+;	None
+; Output:
+;	R0 - код ошибки в мл.байте
 ;
 DSKRDN:	TST DSKIER
 	BEQ DRNL1$
@@ -799,9 +828,10 @@ DRNL3$:	CALL DSKIS
 
 ;-----------------------------------------------------------------------
 ;DSKWRN: Disk: Write Next
-; input: 	R1 - адрес МП в памяти ЦП /2
-; output:	R0 - код ошибки в мл.байте
-;		R1 - адрес МП в памяти ЦП /2
+; Input:
+;	None
+; Output:
+;	R0 - код ошибки в мл.байте
 ;
 DSKWRN:	TST DSKIER
 	BEQ DWNL1$
@@ -820,7 +850,7 @@ DWNL1$:	CALL LOCK
 	ROR R0				; /2
 	SUB R0, DSKNW
 	TST DSKNW
-	BPL DWNL3$			;Disk Write Next Skip
+	BPL DWNL3$			; Disk Write Next Skip
 	clr DSKNW
 	br DWNL3$
 DWNL2$: MOV R0,	DSKERR
@@ -831,17 +861,18 @@ DWNL3$:	CALL DSKIS
 
 ;-----------------------------------------------------------------------
 ;DCTCP: Disk: Copy to CPU Memory
-; input: 	R0 - кол-во слов
-;		R1 - адрес в памяти ЦП /2
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;
-DCTCP:	MOV DSKNW, R1
+DCTCP:	MOV DSKNW, R1			; R1 - кол-во слов
 	CMP R0, R1
 	BLT DCTL1$
 	MOV R1, R0
-DCTL1$:	MOV DSKCPA, R1			; R1 - кол-во слов
+DCTL1$:	MOV DSKCPA, R1			; R1 - адрес ЦП
 	CLC	
-	ROR R1				;R1 - адрес ЦП/2
+	ROR R1				; /2
 	SUB R0, DSKNW
 	MOV #<DSKBUF+8.>, R2
 DCTL2$:	MOV R1, @#177010
@@ -856,16 +887,17 @@ DCTL2$:	MOV R1, @#177010
 
 ;-----------------------------------------------------------------------
 ;DCFCP Disk: Copy from CPU Memory
-; input: 	R0 - кол-во слов
-;		R1 - адрес в памяти ЦП /2
-; output:
+; Input:
+;	R0 - кол-во слов
+; Output:
+;	None
 ;
 DCFCP:	MOV DSKNW, R1
 	MOV #400, R0
 	CMP R0, R1
 	BLT DCFL1$
 	MOV R1, R0
-DCFL1$:	MOV DSKCPA, R1
+DCFL1$:	MOV DSKCPA, R1			; R1 - адрес в памяти ЦП /2
 	CLC
 	ROR R1				; /2
 	MOV #<DSKBUF+8.>, R2
@@ -880,25 +912,27 @@ DCFL2$:	MOV R1, @#177010
 ; Disk Types
 ;  type 1  400Kb (80 track/ 10 sectors/ 1 side
 DSKTYP:	.WORD 79.			; 80 tracks
-	.WORD 0.			;1 side
-	.word 10.			;10 sectors
+	.WORD 0.			; 1 side
+	.word 10.			; 10 sectors
 	.WORD 0
 ;  type 2  800Kb (80 track/ 10 sectors/ 2 sides	
-	.WORD 79.			;80 tracks
-	.WORD 1.			;2 sides
-	.word 10.			;10 sectors
+	.WORD 79.			; 80 tracks
+	.WORD 1.			; 2 sides
+	.word 10.			; 10 sectors
 	.WORD 0
 ;  type 3  400Kb (256 track/ 256 sectors/ 2 sides
-	.WORD 255.			;256 tracks
-	.WORD 1.			;2 sides
-	.word 256.			;256 sectors
+	.WORD 255.			; 256 tracks
+	.WORD 1.			; 2 sides
+	.word 256.			; 256 sectors
 	.WORD 0			
 
 
 ;-----------------------------------------------------------------------
-;DSKCSE Disk: Current Sector
-; input: 
-; output: R0 - current sector
+;DSKCSE Disk:  Return current Sector No
+; Input:
+;	None
+; Output:
+;	R0 - current sector No
 ;
 DSKCSE:	MOV @#<DSKBUF+4>, R0
 	SWAB R0
@@ -907,11 +941,12 @@ DSKCSE:	MOV @#<DSKBUF+4>, R0
 
 
 ;-----------------------------------------------------------------------
-;DSKUSE Disk: Update sector
-; input: R0 - new sector	
-; output:	
+;DSKUSE Disk: Update sector No
+; Input:	R0 - new sector No	
+; Output:
+;	None
 ;		
-DSKUSE:	MOV R0, -(SP) 			;R0 - new sector
+DSKUSE:	MOV R0, -(SP)
 	MOV @#<DSKBUF+4>, R0
 	BIC #177400, R0
 	SWAB R0
@@ -922,9 +957,11 @@ DSKUSE:	MOV R0, -(SP) 			;R0 - new sector
 
 
 ;-----------------------------------------------------------------------
-;DSKCTR Disk: Current Track
-; input: 	
-; output: R0 - current track	
+;DSKCTR Disk:  Return current Track No
+; Input:
+;	None
+; Output:
+;	R0 - current track No	
 ;
 DSKCTR:	MOV @#<DSKBUF+4>, R0
 	BIC #177400, R0		
@@ -932,11 +969,12 @@ DSKCTR:	MOV @#<DSKBUF+4>, R0
 
 
 ;-----------------------------------------------------------------------
-;DSKUTR Disk: Update Track
-; input: 	
-; output:	
+;DSKUTR Disk: Update Track No
+; Input:	R0 - new track No	
+; Output:
+;	None
 ;
-DSKUTR:	MOV R0, -(SP)			;R0 - new track
+DSKUTR:	MOV R0, -(SP)			
 	MOV @#<DSKBUF+4>, R0
 	BIC #377, R0
 	BIS (SP)+, R0
@@ -945,9 +983,11 @@ DSKUTR:	MOV R0, -(SP)			;R0 - new track
 
 
 ;-----------------------------------------------------------------------
-;DSKCSI Disk: Current Side
-; input: 	
-; output: R0 - side	
+;DSKCSI Disk:  Return current Side No
+; Input:
+;	None
+; Output:
+;	R0 - current side No
 ;
 DSKCSI:	MOV @#<DSKBUF+2>, R0
 	BIT #100000, R0
@@ -959,9 +999,11 @@ DCSL1$:	MOV #1, R0
 
 
 ;-----------------------------------------------------------------------
-;DSKUSI Disk: Update Side
-; input: R0 - new side	
-; output:	
+;DSKUSI Disk: Update Side No
+; Input:
+;	R0 - new side No	
+; Output:
+;	None
 ;
 DSKUSI:	TST R0
 	BEQ DUSL1$ 			; new side 0
@@ -976,8 +1018,10 @@ DUSL2$: MOV R0, @#<DSKBUF+2>
 
 ;-----------------------------------------------------------------------
 ;DSKIS Disk: Seek to Next Sector
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;
 DSKIS: 	MOV @#<DSKBUF+2>, R0
 	BIC #177400, R0			;R0 - disk_type
@@ -986,7 +1030,7 @@ DSKIS: 	MOV @#<DSKBUF+2>, R0
 	ASL R0
 	ASL R0
 	ASL R0
-	ADD #<DSKTYP-2-.-4>, R0		; ADD #<DSKTYP-2>, R0 TODO
+	ADD #<<DSKTYP-2>-.-4>, R0	; Смещение до начала таблицы типов дисков
 	ADD PC, R0	
 	MOV (R0)+, R1			; R1 - tracks
 	MOV (R0)+, R2			; R2 - sides
@@ -1023,12 +1067,14 @@ DISL4$:	RETURN
 
 ;-----------------------------------------------------------------------
 ;CDRMAP Disk: read map.txt
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;
 CDRMAP:	MOV R1, R0
-	INC R0
-	INC R0
+	INC R0				; TODO Заменить 
+	INC R0				; на TST (R1)+ 
 	MOV R0, @#177010
 	MOV @#177014, R0		; R0 - адрес ЦП
 	CLC
@@ -1065,14 +1111,16 @@ DRML2$:	MOV R0, @#177010
 
 ;-----------------------------------------------------------------------
 ;CDWMAP Disk: write map.txt
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;		
 CDWMAP:	MOV R1, -(SP)
 	MOV R2, -(SP)
 	MOV R1, R0
-	INC R0
-	INC R0
+	INC R0				; TODO Заменить 
+	INC R0				; на TST (R1)+ 
 	MOV R0, @#177010
 	MOV @#177014, R2		; R2 - адрес ЦП
 	CLC
@@ -1100,13 +1148,15 @@ DWML1$:	MOV R2, @#177010
 
 ;-----------------------------------------------------------------------
 ;CDDIR Disk: read directory
-; input: 	
-; output:	
+; Input:
+;	None
+; Output:
+;	None
 ;
-CDDIR:	MOV r1, -(SP)
-	INC R1
-	INC R1
-	MOV r1, @#177010
+CDDIR:	MOV R1, -(SP)
+	INC R1				; TODO Заменить 
+	INC R1				; на TST (R1)+ 
+	MOV R1, @#177010
 	MOV @#177014, R0		; R0 - N файла с которого начинается список
 	INC R1
 	MOV R1, @#177010
@@ -1149,12 +1199,12 @@ CDDL2$:	MOV R2, @#177010
 
 ;-----------------------------------------------------------------------
 ;B2STRT BOOT2 Start
-B2STRT:NOP
+B2STRT:	NOP
 	CALL CH2TS
 	CALL LOCK
 	MOV #0, @#<DSKBUF+1776>		;DSKBUF+1022>
 	CALL UNLOCK
-	CALL LOCK    ;ugly
+	CALL LOCK    			;ugly
 	CALL UNLOCK
 	RETURN
 

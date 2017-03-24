@@ -891,15 +891,16 @@ if ($romtype eq 'BOOT' || $romtype eq 'DIAG') {
     sub l ($) { $_[0] & 0xFF; }
 
     # start program load here
-    printf $OUT "const uint16_t boot_rom[]={\r\n";
+    printf $OUT "const uint16_t boot_rom[]={\n";
 
     # output the PROM buffer as an octal value
     for (my $idx = $adrmin; $idx < $adrmax+1; $idx += 2) {
-	printf $OUT " %06o,\r\n", (&l($buf[$idx+1])<<8) | &l($buf[$idx+0]);
+#	printf $OUT " %06o,\n", (&l($buf[$idx+1])<<8) | &l($buf[$idx+0]);
+ 	printf $OUT " %06o,\n", (&l($buf[$idx+1])<<8) | &l($buf[$idx+0]);
     }
 
     # ending header file
-    printf $OUT "};\r\n";
+    printf $OUT "};\n";
 }
 
 # all done
